@@ -228,11 +228,11 @@ defmodule RethinkDB.Connection do
           :ok ->
             :ok = Transport.setopts(socket, [active: :once])
             # TODO: investigate timeout vs hibernate
-            {:ok, Keyword.put(state, :socket, socket)}
+            {:ok, Map.put(state, :socket, socket)}
         end
       {:error, reason} when reason in [:econnrefused, :nxdomain] ->
-        backoff = min(Keyword.get(state, :timeout, 1000), 64000)
-        {:backoff, backoff, Keyword.put(state, :timeout, backoff*2)}
+        backoff = min(Map.get(state, :timeout, 1000), 64000)
+        {:backoff, backoff, Map.put(state, :timeout, backoff*2)}
     end
   end
 
