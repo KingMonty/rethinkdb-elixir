@@ -51,7 +51,7 @@ defmodule RethinkDB.Connection do
   defmacro __using__(_opts) do
     quote location: :keep do
       def start_link(opts \\ []) do
-        if Map.has_key?(opts, :name) && opts[:name] != __MODULE__ do
+        if Keyword.has_key?(opts, :name) && opts[:name] != __MODULE__ do
           # The whole point of this macro is to provide an implicit process
           # name, so subverting it is considered an error.
           raise ArgumentError.exception(
