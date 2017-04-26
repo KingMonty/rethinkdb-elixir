@@ -321,7 +321,15 @@ defmodule RethinkDB.Connection do
     :ok
   end
 
-  def terminate(_reason, _state) do
+  def terminate(reason, state) do
+    IO.inspect reason
+    IO.inspect reason
+    IO.inspect reason
+    IO.inspect reason
+    IO.inspect state
+    IO.inspect state
+    IO.inspect state
+    IO.inspect state
     :ok
   end
 
