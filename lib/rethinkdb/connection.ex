@@ -207,7 +207,7 @@ defmodule RethinkDB.Connection do
       pending: %{},
       current: {:start, ""},
       token: 0,
-      config: Keyword.put(opts, :transport, {transport, transport_opts})
+      config: Map.put(opts, :transport, {transport, transport_opts})
     }
     case sync_connect do
       true ->
