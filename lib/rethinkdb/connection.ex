@@ -191,7 +191,7 @@ defmodule RethinkDB.Connection do
       x when is_binary(x) -> String.to_char_list x
       x -> x
     end
-    sync_connect = Map.get(opts, :sync_connect, false)
+    sync_connect = Keyword.get(opts, :sync_connect, false)
     ssl = Map.get(opts, :ssl)
     opts = Map.put(opts, :host, host)
       |> Map.put_new(:port, 28015)
