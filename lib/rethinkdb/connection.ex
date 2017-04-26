@@ -51,14 +51,14 @@ defmodule RethinkDB.Connection do
   defmacro __using__(_opts) do
     quote location: :keep do
       def start_link(opts \\ []) do
-        if Dict.has_key?(opts, :name) && opts[:name] != __MODULE__ do
+        if Map.has_key?(opts, :name) && opts[:name] != __MODULE__ do
           # The whole point of this macro is to provide an implicit process
           # name, so subverting it is considered an error.
           raise ArgumentError.exception(
             "Process name #{inspect opts[:name]} conflicts with implicit name #{inspect __MODULE__} provided by `use RethinkDB.Connection`"
           )
         end
-        RethinkDB.Connection.start_link(Dict.put_new(opts, :name, __MODULE__))
+        RethinkDB.Connection.start_link(Map.put_new(opts, :name, __MODULE__))
       end
 
       def run(query, opts \\ []) do
@@ -98,12 +98,12 @@ defmodule RethinkDB.Connection do
   * `profile` - whether or not to return a profile of the query’s execution (default: false).
   """
   def run(query, conn, opts \\ []) do
-    timeout = Dict.get(opts, :timeout, 5000)
-    conn_opts = Dict.drop(opts, [:timeout])
-    noreply = Dict.get(opts, :noreply, false)
+    timeout = Map.get(opts, :timeout, 5000)
+    conn_opts = Map.drop(opts, [:timeout])
+    noreply = Map.get(opts, :noreply, false)
     conn_opts = Connection.call(conn, :conn_opts)
-                |> Dict.take([:db])
-                |> Dict.merge(conn_opts)
+                |> Map.take([:db])
+                |> Map.merge(conn_opts)
     query = prepare_and_encode(query, conn_opts)
     msg = case noreply do
       true -> {:query_noreply, query}
@@ -170,7 +170,7 @@ defmodule RethinkDB.Connection do
   @doc """
   Start connection as a linked process
 
-  Accepts a `Dict` of options. Supported options:
+  Accepts a `Map` of options. Supported options:
 
   * `:host` - hostname to use to connect to database. Defaults to `'localhost'`.
   * `:port` - port on which to connect to database. Defaults to `28015`.
@@ -178,30 +178,30 @@ defmodule RethinkDB.Connection do
   * `:db` - default database to use with queries. Defaults to `nil`.
   * `:sync_connect` - whether to have `init` block until a connection succeeds. Defaults to `false`.
   * `:max_pending` - Hard cap on number of concurrent requests. Defaults to `10000`
-  * `:ssl` - a dict of options. Support SSL options:
+  * `:ssl` - a Map of options. Support SSL options:
       * `:ca_certs` - a list of file paths to cacerts.
   """
   def start_link(opts \\ []) do
-    args = Dict.take(opts, [:host, :port, :auth_key, :db, :sync_connect, :ssl, :max_pending])
+    args = Map.take(opts, [:host, :port, :auth_key, :db, :sync_connect, :ssl, :max_pending])
     Connection.start_link(__MODULE__, args, opts)
   end
 
   def init(opts) do
-    host = case Dict.get(opts, :host, 'localhost') do
+    host = case Map.get(opts, :host, 'localhost') do
       x when is_binary(x) -> String.to_char_list x
       x -> x
     end
-    sync_connect = Dict.get(opts, :sync_connect, false)
-    ssl = Dict.get(opts, :ssl)
-    opts = Dict.put(opts, :host, host)
-      |> Dict.put_new(:port, 28015)
-      |> Dict.put_new(:auth_key, "")
-      |> Dict.put_new(:max_pending, 10000)
-      |> Dict.drop([:sync_connect])
+    sync_connect = Map.get(opts, :sync_connect, false)
+    ssl = Map.get(opts, :ssl)
+    opts = Map.put(opts, :host, host)
+      |> Map.put_new(:port, 28015)
+      |> Map.put_new(:auth_key, "")
+      |> Map.put_new(:max_pending, 10000)
+      |> Map.drop([:sync_connect])
       |> Enum.into(%{})
     {transport, transport_opts} = case ssl do
       nil -> {%Transport.TCP{}, []}
-      x -> {%Transport.SSL{}, Enum.map(Dict.fetch!(x, :ca_certs),  &({:cacertfile, &1})) ++ [verify: :verify_peer]}
+      x -> {%Transport.SSL{}, Enum.map(Map.fetch!(x, :ca_certs),  &({:cacertfile, &1})) ++ [verify: :verify_peer]}
     end
     state = %{
       pending: %{},
@@ -228,11 +228,11 @@ defmodule RethinkDB.Connection do
           :ok ->
             :ok = Transport.setopts(socket, [active: :once])
             # TODO: investigate timeout vs hibernate
-            {:ok, Dict.put(state, :socket, socket)}
+            {:ok, Map.put(state, :socket, socket)}
         end
       {:error, reason} when reason in [:econnrefused, :nxdomain] ->
-        backoff = min(Dict.get(state, :timeout, 1000), 64000)
-        {:backoff, backoff, Dict.put(state, :timeout, backoff*2)}
+        backoff = min(Map.get(state, :timeout, 1000), 64000)
+        {:backoff, backoff, Map.put(state, :timeout, backoff*2)}
     end
   end
 
