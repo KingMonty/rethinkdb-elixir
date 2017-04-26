@@ -50,18 +50,18 @@ defmodule RethinkDB.Connection do
   """
   defmacro __using__(_opts) do
     quote location: :keep do
-      def start_link(opts \\ []) do
-        if Keyword.has_key?(opts, :name) && opts[:name] != __MODULE__ do
+      def start_link(opts \\ %{}) do
+        if Map.has_key?(opts, :name) && opts[:name] != __MODULE__ do
           # The whole point of this macro is to provide an implicit process
           # name, so subverting it is considered an error.
           raise ArgumentError.exception(
             "Process name #{inspect opts[:name]} conflicts with implicit name #{inspect __MODULE__} provided by `use RethinkDB.Connection`"
           )
         end
-        RethinkDB.Connection.start_link(Keyword.put_new(opts, :name, __MODULE__))
+        RethinkDB.Connection.start_link(Map.put_new(opts, :name, __MODULE__))
       end
 
-      def run(query, opts \\ []) do
+      def run(query, opts \\ %{}) do
         RethinkDB.Connection.run(query, __MODULE__, opts)
       end
 
@@ -97,10 +97,10 @@ defmodule RethinkDB.Connection do
   * `noreply` - set to true to not receive the result object or cursor and return immediately.
   * `profile` - whether or not to return a profile of the query’s execution (default: false).
   """
-  def run(query, conn, opts \\ []) do
-    timeout = Keyword.get(opts, :timeout, 5000)
-    conn_opts = Keyword.drop(opts, [:timeout])
-    noreply = Keyword.get(opts, :noreply, false)
+  def run(query, conn, opts \\ %{}) do
+    timeout = Map.get(opts, :timeout, 5000)
+    conn_opts = Map.drop(opts, [:timeout])
+    noreply = Map.get(opts, :noreply, false)
     conn_opts = Connection.call(conn, :conn_opts)
                 |> Map.take([:db])
                 |> Map.merge(conn_opts)
@@ -170,7 +170,7 @@ defmodule RethinkDB.Connection do
   @doc """
   Start connection as a linked process
 
-  Accepts a `Keyword` of options. Supported options:
+  Accepts a `Map` of options. Supported options:
 
   * `:host` - hostname to use to connect to database. Defaults to `'localhost'`.
   * `:port` - port on which to connect to database. Defaults to `28015`.
@@ -181,27 +181,27 @@ defmodule RethinkDB.Connection do
   * `:ssl` - a Map of options. Support SSL options:
       * `:ca_certs` - a list of file paths to cacerts.
   """
-  def start_link(opts \\ []) do
-    args = Keyword.take(opts, [:host, :port, :auth_key, :db, :sync_connect, :ssl, :max_pending])
+  def start_link(opts \\ %{}) do
+    args = Map.take(opts, [:host, :port, :auth_key, :db, :sync_connect, :ssl, :max_pending])
     Connection.start_link(__MODULE__, args, opts)
   end
 
   def init(opts) do
-    host = case Keyword.get(opts, :host, 'localhost') do
+    host = case Map.get(opts, :host, 'localhost') do
       x when is_binary(x) -> String.to_char_list x
       x -> x
     end
-    sync_connect = Keyword.get(opts, :sync_connect, false)
-    ssl = Keyword.get(opts, :ssl)
-    opts = Keyword.put(opts, :host, host)
-      |> Keyword.put_new(:port, 28015)
-      |> Keyword.put_new(:auth_key, "")
-      |> Keyword.put_new(:max_pending, 10000)
-      |> Keyword.drop([:sync_connect])
+    sync_connect = Map.get(opts, :sync_connect, false)
+    ssl = Map.get(opts, :ssl)
+    opts = Map.put(opts, :host, host)
+      |> Map.put_new(:port, 28015)
+      |> Map.put_new(:auth_key, "")
+      |> Map.put_new(:max_pending, 10000)
+      |> Map.drop([:sync_connect])
       |> Enum.into(%{})
     {transport, transport_opts} = case ssl do
-      nil -> {%Transport.TCP{}, []}
-      x -> {%Transport.SSL{}, Enum.map(Keyword.fetch!(x, :ca_certs),  &({:cacertfile, &1})) ++ [verify: :verify_peer]}
+      nil -> {%Transport.TCP{}, %{}}
+      x -> {%Transport.SSL{}, Enum.map(Map.fetch!(x, :ca_certs),  &({:cacertfile, &1})) ++ [verify: :verify_peer]}
     end
     state = %{
       pending: %{},
@@ -241,9 +241,9 @@ defmodule RethinkDB.Connection do
       Connection.reply(pid, %RethinkDB.Exception.ConnectionClosed{})
     end)
     new_state = state
-      |> Keyword.delete(:socket)
-      |> Keyword.put(:pending, %{})
-      |> Keyword.put(:current, {:start, ""})
+      |> Map.delete(:socket)
+      |> Map.put(:pending, %{})
+      |> Map.put(:current, {:start, ""})
     # TODO: should we reconnect?
     {:stop, info, new_state}
   end
