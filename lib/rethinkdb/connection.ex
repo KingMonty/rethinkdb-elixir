@@ -102,8 +102,8 @@ defmodule RethinkDB.Connection do
     conn_opts = Keyword.drop(opts, [:timeout])
     noreply = Keyword.get(opts, :noreply, false)
     conn_opts = Connection.call(conn, :conn_opts)
-                |> Keyword.take([:db])
-                |> Keyword.merge(conn_opts)
+                |> Map.take([:db])
+                |> Map.merge(conn_opts)
     query = prepare_and_encode(query, conn_opts)
     msg = case noreply do
       true -> {:query_noreply, query}
