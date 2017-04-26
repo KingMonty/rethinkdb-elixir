@@ -98,12 +98,12 @@ defmodule RethinkDB.Connection do
   * `profile` - whether or not to return a profile of the query’s execution (default: false).
   """
   def run(query, conn, opts \\ []) do
-    timeout = Map.get(opts, :timeout, 5000)
-    conn_opts = Map.drop(opts, [:timeout])
-    noreply = Map.get(opts, :noreply, false)
+    timeout = Keyword.get(opts, :timeout, 5000)
+    conn_opts = Keyword.drop(opts, [:timeout])
+    noreply = Keyword.get(opts, :noreply, false)
     conn_opts = Connection.call(conn, :conn_opts)
-                |> Map.take([:db])
-                |> Map.merge(conn_opts)
+                |> Keyword.take([:db])
+                |> Keyword.merge(conn_opts)
     query = prepare_and_encode(query, conn_opts)
     msg = case noreply do
       true -> {:query_noreply, query}
@@ -170,7 +170,7 @@ defmodule RethinkDB.Connection do
   @doc """
   Start connection as a linked process
 
-  Accepts a `Map` of options. Supported options:
+  Accepts a `Keyword` of options. Supported options:
 
   * `:host` - hostname to use to connect to database. Defaults to `'localhost'`.
   * `:port` - port on which to connect to database. Defaults to `28015`.
@@ -192,22 +192,22 @@ defmodule RethinkDB.Connection do
       x -> x
     end
     sync_connect = Keyword.get(opts, :sync_connect, false)
-    ssl = Map.get(opts, :ssl)
-    opts = Map.put(opts, :host, host)
-      |> Map.put_new(:port, 28015)
-      |> Map.put_new(:auth_key, "")
-      |> Map.put_new(:max_pending, 10000)
-      |> Map.drop([:sync_connect])
+    ssl = Keyword.get(opts, :ssl)
+    opts = Keyword.put(opts, :host, host)
+      |> Keyword.put_new(:port, 28015)
+      |> Keyword.put_new(:auth_key, "")
+      |> Keyword.put_new(:max_pending, 10000)
+      |> Keyword.drop([:sync_connect])
       |> Enum.into(%{})
     {transport, transport_opts} = case ssl do
       nil -> {%Transport.TCP{}, []}
-      x -> {%Transport.SSL{}, Enum.map(Map.fetch!(x, :ca_certs),  &({:cacertfile, &1})) ++ [verify: :verify_peer]}
+      x -> {%Transport.SSL{}, Enum.map(Keyword.fetch!(x, :ca_certs),  &({:cacertfile, &1})) ++ [verify: :verify_peer]}
     end
     state = %{
       pending: %{},
       current: {:start, ""},
       token: 0,
-      config: Map.put(opts, :transport, {transport, transport_opts})
+      config: Keyword.put(opts, :transport, {transport, transport_opts})
     }
     case sync_connect do
       true ->
@@ -228,11 +228,11 @@ defmodule RethinkDB.Connection do
           :ok ->
             :ok = Transport.setopts(socket, [active: :once])
             # TODO: investigate timeout vs hibernate
-            {:ok, Map.put(state, :socket, socket)}
+            {:ok, Keyword.put(state, :socket, socket)}
         end
       {:error, reason} when reason in [:econnrefused, :nxdomain] ->
-        backoff = min(Map.get(state, :timeout, 1000), 64000)
-        {:backoff, backoff, Map.put(state, :timeout, backoff*2)}
+        backoff = min(Keyword.get(state, :timeout, 1000), 64000)
+        {:backoff, backoff, Keyword.put(state, :timeout, backoff*2)}
     end
   end
 
@@ -241,9 +241,9 @@ defmodule RethinkDB.Connection do
       Connection.reply(pid, %RethinkDB.Exception.ConnectionClosed{})
     end)
     new_state = state
-      |> Map.delete(:socket)
-      |> Map.put(:pending, %{})
-      |> Map.put(:current, {:start, ""})
+      |> Keyword.delete(:socket)
+      |> Keyword.put(:pending, %{})
+      |> Keyword.put(:current, {:start, ""})
     # TODO: should we reconnect?
     {:stop, info, new_state}
   end
