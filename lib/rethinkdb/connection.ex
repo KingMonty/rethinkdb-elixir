@@ -58,7 +58,7 @@ defmodule RethinkDB.Connection do
             "Process name #{inspect opts[:name]} conflicts with implicit name #{inspect __MODULE__} provided by `use RethinkDB.Connection`"
           )
         end
-        RethinkDB.Connection.start_link(Map.put_new(opts, :name, __MODULE__))
+        RethinkDB.Connection.start_link(Keyword.put_new(opts, :name, __MODULE__))
       end
 
       def run(query, opts \\ []) do
