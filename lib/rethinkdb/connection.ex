@@ -187,7 +187,7 @@ defmodule RethinkDB.Connection do
   end
 
   def init(opts) do
-    host = case Map.get(opts, :host, 'localhost') do
+    host = case Keyword.get(opts, :host, 'localhost') do
       x when is_binary(x) -> String.to_char_list x
       x -> x
     end
