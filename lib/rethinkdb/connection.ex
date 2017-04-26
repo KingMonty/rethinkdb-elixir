@@ -233,17 +233,6 @@ defmodule RethinkDB.Connection do
       {:error, reason} when reason in [:econnrefused, :nxdomain] ->
         backoff = min(Dict.get(state, :timeout, 1000), 64000)
         {:backoff, backoff, Dict.put(state, :timeout, backoff*2)}
-      msg ->
-        IO.inspect msg
-        IO.inspect msg
-        IO.inspect msg
-        IO.inspect msg
-        IO.inspect msg
-        IO.inspect msg
-        IO.inspect msg
-        IO.inspect msg
-        IO.inspect msg
-        IO.inspect msg
     end
   end
 
@@ -321,15 +310,7 @@ defmodule RethinkDB.Connection do
     :ok
   end
 
-  def terminate(reason, state) do
-    IO.inspect reason
-    IO.inspect reason
-    IO.inspect reason
-    IO.inspect reason
-    IO.inspect state
-    IO.inspect state
-    IO.inspect state
-    IO.inspect state
+  def terminate(_reason, _state) do
     :ok
   end
 
