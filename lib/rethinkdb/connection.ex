@@ -230,7 +230,7 @@ defmodule RethinkDB.Connection do
             # TODO: investigate timeout vs hibernate
             {:ok, Dict.put(state, :socket, socket)}
         end
-      {:error, reason when reason in [:econnrefused, :nxdomain]} ->
+      {:error, reason} when reason in [:econnrefused, :nxdomain] ->
         backoff = min(Dict.get(state, :timeout, 1000), 64000)
         {:backoff, backoff, Dict.put(state, :timeout, backoff*2)}
     end
